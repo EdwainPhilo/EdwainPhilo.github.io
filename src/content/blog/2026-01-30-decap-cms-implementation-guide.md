@@ -8,7 +8,8 @@ heroImage: '../../assets/blog-placeholder-2.jpg'
 
 ## 引言
 
-在前一篇文章《为静态博客添加编写功能的方案对比》中，我们对比了五种为 Astro 静态博客添加页面编写功能的方案。基于简单、免费、数据自主的原则，我选择了**方案一：Decap CMS（原 Netlify CMS）**。
+在前一篇文章《为静态博客添加编写功能的方案对比》中，我们对比了五种为 Astro 静态博客添加页面编写功能的方案。基于简单、免费、数据自主的原则，我选择了
+**方案一：Decap CMS（原 Netlify CMS）**。
 
 本文将作为详细的实施指南，一步步讲解如何将 Decap CMS 集成到现有的 Astro 博客中。即使你是 CMS 新手，也可以跟随本指南完成配置。
 
@@ -67,6 +68,7 @@ collections:
 ```
 
 **重要说明**：
+
 - `repo`：必须替换为你的 GitHub 用户名和仓库名
 - `media_folder`：上传的图片等媒体文件将存储在此目录
 - `public_folder`：前端访问这些文件的路径，需要根据项目结构调整
@@ -114,11 +116,11 @@ Decap CMS 需要通过 GitHub 进行身份验证。你需要创建一个 GitHub 
 1. **访问 GitHub 设置**：登录 GitHub → 点击右上角头像 → Settings → Developer settings → OAuth Apps → New OAuth App
 
 2. **填写应用信息**：
-   - **Application name**：你的博客名称 + CMS（如：My Blog CMS）
-   - **Homepage URL**：你的博客网站地址（如：`https://edwainphilo.github.io`）
-   - **Authorization callback URL**：`https://edwainphilo.github.io/admin/index.html`
-     - **重要**：这里的路径是 `/admin/index.html` 而不是 `/admin`
-     - 如果你使用自定义域名，请相应调整
+    - **Application name**：你的博客名称 + CMS（如：My Blog CMS）
+    - **Homepage URL**：你的博客网站地址（如：`https://edwainphilo.github.io`）
+    - **Authorization callback URL**：`https://edwainphilo.github.io/admin/index.html`
+        - **重要**：这里的路径是 `/admin/index.html` 而不是 `/admin`
+        - 如果你使用自定义域名，请相应调整
 
 3. **注册应用**：点击 "Register application"
 
@@ -150,27 +152,139 @@ backend:
 ### ⚠️ 重要提醒：GitHub Pages 的特殊情况
 
 在实际测试中，你可能会发现即使配置了上述 OAuth 信息，点击登录按钮时仍然出现 **404 错误**，访问的 URL 类似：
+
 ```
 https://api.netlify.com/auth?provider=github&site_id=你的域名&scope=public_repo
 ```
 
-**问题原因**：Decap CMS 默认使用 **Netlify Identity** 服务处理 GitHub OAuth 认证。当网站托管在 GitHub Pages（而不是 Netlify）时，Netlify 的认证服务无法识别你的站点，因此返回 404。
+**问题原因**：Decap CMS 默认使用 **Netlify Identity** 服务处理 GitHub OAuth 认证。当网站托管在 GitHub Pages（而不是
+Netlify）时，Netlify 的认证服务无法识别你的站点，因此返回 404。
 
 **解决方案**：有几种方法可以解决这个问题：
 
 #### 方案 A：使用外部 OAuth 服务器（推荐用于生产环境）
 
-社区维护了一些外部 OAuth 服务器项目，可以绕过 Netlify Identity：
+社区维护了一些外部 OAuth 服务器项目，可以绕过 Netlify Identity。这个方案可以在 GitHub Pages 上正常工作，而不依赖 Netlify。
 
-1. **Cloudflare Pages OAuth 服务器**：
-   - 项目地址：https://github.com/i40west/decap-cms-oauth-cloudflare
-   - 部署到 Cloudflare Pages，获取服务 URL
-   - 在 `config.yml` 中添加：`api_root: https://你的服务地址/api/v1`
+##### 第一步：选择 OAuth 服务器项目
 
-2. **Vercel OAuth 服务器**：
-   - 项目地址：https://github.com/vencax/netlify-cms-oauth-provider
-   - 部署到 Vercel
-   - 同样添加 `api_root` 配置
+有两个主要选择（推荐 Vercel 版本，因为更简单）：
+
+**选项 1：Vercel OAuth 服务器**（推荐）⭐
+
+- 项目地址：https://github.com/vencax/netlify-cms-github-oauth-provider
+- 优点：部署简单，支持 Vercel 免费版
+
+**选项 2：Cloudflare Pages OAuth 服务器**
+
+- 项目地址：https://github.com/i40west/netlify-cms-cloudflare-pages
+- 优点：部署在 Cloudflare，性能好
+
+##### 第二步：部署 OAuth 服务器到 Vercel（推荐）
+
+我推荐你使用 **Vercel 版本**，因为：
+
+1. Vercel 有免费额度（且比 Netlify 更慷慨）
+2. 部署非常简单，一键部署
+3. 与 GitHub 集成良好
+
+**具体步骤**：
+
+1. 访问项目页面：https://github.com/vencax/netlify-cms-github-oauth-provider
+
+2. 点击 **"Use this template" → "Create a new repository"**
+    - Fork 或使用模板创建你自己的仓库
+    - 命名如：`decap-cms-oauth-provider`
+
+3. 在 Vercel 上部署：
+    - 访问 https://vercel.com
+    - 登录/注册账号（GitHub 账号登录即可）
+    - 点击 **"Add New Project"**
+    - 导入你刚创建的 OAuth Provider 仓库
+    - 点击 **"Deploy"**（默认配置即可）
+
+4. 部署完成后，Vercel 会给你一个域名，例如：
+   ```
+   https://decap-cms-oauth-provider.vercel.app
+   ```
+   请记下这个地址
+
+##### 第三步：配置环境变量
+
+在 Vercel 项目中配置环境变量：
+
+1. 进入你的 Vercel 项目 → **Settings** → **Environment Variables**
+
+2. 添加以下环境变量：
+
+   | 变量名                    | 说明                             | 值                               |
+         |------------------------|--------------------------------|---------------------------------|
+   | `GITHUB_CLIENT_ID`     | GitHub OAuth 应用的 Client ID     | 你之前创建的 `Ov23ctr7M5ShaJ0geBCB`   |
+   | `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用的 Client Secret | 需要你在 GitHub OAuth 应用设置中生成       |
+   | `ALLOWED_ORIGINS`      | 允许的网站地址                        | `https://edwainphilo.github.io` |
+
+3. 重新部署项目（Vercel 会自动检测环境变量变化并重新部署）
+
+##### 第四步：更新 GitHub OAuth 应用的回调 URL
+
+回到你之前创建的 GitHub OAuth 应用：
+
+1. 访问：https://github.com/settings/developers
+2. 找到你的 OAuth 应用
+3. 修改 **Authorization callback URL** 为：
+   ```
+   https://decap-cms-oauth-provider.vercel.app/auth/callback
+   ```
+   （替换成你实际的 Vercel 域名）
+
+##### 第五步：更新 config.yml 配置
+
+在你的 `config.yml` 中添加 `api_root` 配置：
+
+```yaml
+backend:
+  name: github
+  repo: EdwainPhilo/EdwainPhilo.github.io
+  branch: main
+  auth_type: pkce
+  auth_scope: public_repo
+  client_id: Ov23ctr7M5ShaJ0geBCB
+  # 新增：指定 OAuth 服务器的 API 地址
+  api_root: "https://decap-cms-oauth-provider.vercel.app/api/v1"
+```
+
+##### 第六步：提交并部署
+
+1. 提交更新后的 `config.yml` 到 GitHub
+2. GitHub Pages 会自动重新构建
+3. 等待部署完成（通常 1-2 分钟）
+4. 访问：`https://edwainphilo.github.io/admin`
+5. 点击 **"Login with GitHub"**，应该可以正常登录了！
+
+##### 如果遇到问题
+
+**问题 1**：部署 OAuth 服务器后，无法访问
+
+- 检查 Vercel 部署日志
+- 确保环境变量配置正确
+
+**问题 2**：登录时出现错误
+
+- 检查 GitHub OAuth 应用的回调 URL 是否正确
+- 确认 `api_root` 地址是否正确（包含 `/api/v1`）
+
+**问题 3**：仍然返回 404
+
+- 确认 OAuth 服务器部署成功，可以访问
+- 测试 OAuth 服务器的健康检查端点：`https://你的域名/.well-known/oauth-authorization-server`
+
+##### 方案对比
+
+| 方案               | 平台                | 难度 | 成本        | 推荐度     |
+|------------------|-------------------|----|-----------|---------|
+| 方案1：Netlify      | Netlify           | ⭐  | ❌ 免费额度已用完 | ❌       |
+| **方案2：外部 OAuth** | Vercel/Cloudflare | ⭐⭐ | ✅ 免费可用    | ✅ 推荐    |
+| 方案3：本地开发         | 本地                | ⭐  | ✅ 免费      | ⚠️ 仅限本地 |
 
 #### 方案 B：部署到 Netlify（最简单）
 
@@ -217,6 +331,7 @@ https://api.netlify.com/auth?provider=github&site_id=你的域名&scope=public_r
 4. **创建测试文章**：登录后尝试创建一篇测试文章，观察文件是否生成在 `src/content/blog/` 目录
 
 **本地测试模式**：Decap CMS 支持本地测试模式，无需 GitHub 认证：
+
 - 在 `config.yml` 中添加 `local_backend: true`
 - 访问 `http://localhost:4321/admin` 时会使用本地模拟后端
 - 适合快速测试界面和配置
@@ -241,6 +356,7 @@ on:
 ### 部署后的访问地址
 
 部署完成后，可以通过以下地址访问管理后台：
+
 - `https://你的用户名.github.io/admin`
 - 或你的自定义域名 `/admin`
 
@@ -256,18 +372,18 @@ on:
 
 1. **点击"New Blog"**：进入文章编辑界面
 2. **填写基本信息**：
-   - **标题**：文章标题
-   - **描述**：文章摘要
-   - **发布日期**：选择发布日期
-   - **封面图**：可选，点击上传或选择现有图片
+    - **标题**：文章标题
+    - **描述**：文章摘要
+    - **发布日期**：选择发布日期
+    - **封面图**：可选，点击上传或选择现有图片
 3. **编写正文**：使用 Markdown 编辑器编写内容，支持：
-   - 实时预览
-   - 图片上传
-   - 代码块
-   - 标题、列表、链接等格式
+    - 实时预览
+    - 图片上传
+    - 代码块
+    - 标题、列表、链接等格式
 4. **保存与发布**：
-   - **Save**：保存为草稿（不会立即发布）
-   - **Save and Publish**：保存并立即提交到 GitHub，触发部署
+    - **Save**：保存为草稿（不会立即发布）
+    - **Save and Publish**：保存并立即提交到 GitHub，触发部署
 
 ### 编辑现有文章
 
@@ -295,7 +411,7 @@ fields:
 collections:
   - name: "blog"
     # ... 博客配置
-  
+
   - name: "projects"
     label: "项目"
     folder: "src/content/projects"
@@ -314,33 +430,42 @@ Decap CMS 支持自定义内容预览，让编辑者看到接近最终效果的�
 ## 常见问题与解决
 
 ### 1. 登录后显示空白页面
+
 - **可能原因**：配置文件路径错误
 - **解决**：确认 `config.yml` 在 `public/admin/` 目录下，且路径正确
 
 ### 2. GitHub 认证失败
+
 - **可能原因**：OAuth 应用的回调 URL 不正确
 - **解决**：检查回调 URL 是否为 `https://你的域名/admin/index.html`
 
 ### 3. 媒体文件上传失败
+
 - **可能原因**：`media_folder` 或 `public_folder` 配置错误
 - **解决**：确保路径存在且有写入权限
 
 ### 4. 内容提交后网站未更新
+
 - **可能原因**：GitHub Actions 未触发或失败
 - **解决**：检查 `.github/workflows/deploy.yml` 和工作流运行状态
 
 ### 5. 本地测试无法保存
+
 - **可能原因**：Git 仓库未初始化或权限问题
 - **解决**：确保本地仓库已初始化，且用户有写入权限
 
 ### 6. 点击登录按钮显示404错误（线上环境）
-- **可能原因**：Decap CMS 默认使用 Netlify Identity 服务处理 GitHub OAuth 认证。当网站托管在 GitHub Pages 上时，Netlify 无法识别你的站点。
+
+- **可能原因**：Decap CMS 默认使用 Netlify Identity 服务处理 GitHub OAuth 认证。当网站托管在 GitHub Pages 上时，Netlify
+  无法识别你的站点。
 - **现象**：登录时访问的 URL 类似：`https://api.netlify.com/auth?provider=github&site_id=你的域名&scope=public_repo`
 - **解决方案**：
-  1. **部署到 Netlify**：将网站部署到 Netlify 平台，使用其原生的 Identity 服务。
-  2. **使用外部 OAuth 服务器**：部署社区维护的 OAuth 服务器（如 Cloudflare Pages 或 Vercel 版本），并在 `config.yml` 中添加 `api_root` 配置。
-  3. **本地创作模式**：在本地使用 `local_backend: true` 配置，配合 `npx decap-cms-proxy-server` 进行内容创作，然后手动提交到 Git。
-  详细说明请参考上文"重要提醒：GitHub Pages 的特殊情况"章节。
+    1. **部署到 Netlify**：将网站部署到 Netlify 平台，使用其原生的 Identity 服务。
+    2. **使用外部 OAuth 服务器**：部署社区维护的 OAuth 服务器（如 Cloudflare Pages 或 Vercel 版本），并在 `config.yml` 中添加
+       `api_root` 配置。
+    3. **本地创作模式**：在本地使用 `local_backend: true` 配置，配合 `npx decap-cms-proxy-server` 进行内容创作，然后手动提交到
+       Git。
+       详细说明请参考上文"重要提醒：GitHub Pages 的特殊情况"章节。
 
 ## 安全注意事项
 
@@ -372,7 +497,8 @@ Decap CMS 支持自定义内容预览，让编辑者看到接近最终效果的�
 
 ## 写在最后
 
-Decap CMS 为静态博客提供了一种简单而强大的内容管理方案。它既保留了静态站点的性能和安全性，又提供了现代 CMS 的编辑体验。希望本指南能帮助你顺利实施，让你的博客创作更加高效愉快。
+Decap CMS 为静态博客提供了一种简单而强大的内容管理方案。它既保留了静态站点的性能和安全性，又提供了现代 CMS
+的编辑体验。希望本指南能帮助你顺利实施，让你的博客创作更加高效愉快。
 
 如果在实施过程中遇到问题，可以参考官方文档或在相关社区寻求帮助。祝你成功！
 
