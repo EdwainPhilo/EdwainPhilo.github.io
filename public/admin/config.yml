@@ -2,6 +2,9 @@ backend:
   name: github
   repo: EdwainPhilo/EdwainPhilo.github.io
   branch: main
+  site_domain: wonderful-philo-site.vercel.app
+  base_url: https://wonderful-philo-site.vercel.app
+  auth_endpoint: oauth
 media_folder: "src/assets" # 文件将被存储在仓库中的位置
 public_folder: "../../assets" # 上传媒体文件的 src 属性
 
