@@ -97,9 +97,10 @@ const description = "使用 Decap CMS 管理博客内容";
     <!-- CMS 界面将挂载在此处 -->
     <div id="nc-root"></div>
     <!-- 引入 Decap CMS JavaScript -->
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- is:inline 属性确保 Astro 不会处理这个外部脚本 -->
+    <script is:inline src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
     <!-- 可选：自定义初始化脚本 -->
-    <script>
+    <script is:inline>
       console.log('Decap CMS 已加载，管理后台准备就绪');
     </script>
   </body>
@@ -132,26 +133,73 @@ backend:
   name: github
   repo: 你的用户名/你的仓库名
   branch: main
-  # 添加以下两行
-  auth_type: implicit  # 或 'code'，推荐 'implicit' 更简单
-  app_id: "你的ClientID"
-  # Client Secret 不应该直接放在配置文件中（见下文说明）
+  # 添加以下配置（PKCE 模式更安全）
+  auth_type: pkce
+  auth_scope: public_repo
+  client_id: "你的ClientID"
+  # 注意：Client Secret 不需要写在配置文件中
 ```
 
 **安全提醒**：Client Secret 是敏感信息，**不应直接提交到公开仓库**。有两种处理方式：
 
 1. **环境变量**（推荐）：在构建时注入
-2. **GitHub Pages 环境**：如果你的仓库是公开的，可以省略 `auth_scope`（默认为 `public_repo`）
+2. **GitHub Pages 环境**：如果你的仓库是公开的，Decap CMS 会使用 OAuth 流程，不需要 Client Secret
 
-对于个人博客，通常仓库是公开的，可以简化配置：
+对于个人博客，通常仓库是公开的，可以使用上述 PKCE 模式配置。
 
-```yaml
-backend:
-  name: github
-  repo: 你的用户名/你的仓库名
-  branch: main
-  # 对于公开仓库，可以省略 auth_scope，Decap CMS 会使用默认值
+### ⚠️ 重要提醒：GitHub Pages 的特殊情况
+
+在实际测试中，你可能会发现即使配置了上述 OAuth 信息，点击登录按钮时仍然出现 **404 错误**，访问的 URL 类似：
 ```
+https://api.netlify.com/auth?provider=github&site_id=你的域名&scope=public_repo
+```
+
+**问题原因**：Decap CMS 默认使用 **Netlify Identity** 服务处理 GitHub OAuth 认证。当网站托管在 GitHub Pages（而不是 Netlify）时，Netlify 的认证服务无法识别你的站点，因此返回 404。
+
+**解决方案**：有几种方法可以解决这个问题：
+
+#### 方案 A：使用外部 OAuth 服务器（推荐用于生产环境）
+
+社区维护了一些外部 OAuth 服务器项目，可以绕过 Netlify Identity：
+
+1. **Cloudflare Pages OAuth 服务器**：
+   - 项目地址：https://github.com/i40west/decap-cms-oauth-cloudflare
+   - 部署到 Cloudflare Pages，获取服务 URL
+   - 在 `config.yml` 中添加：`api_root: https://你的服务地址/api/v1`
+
+2. **Vercel OAuth 服务器**：
+   - 项目地址：https://github.com/vencax/netlify-cms-oauth-provider
+   - 部署到 Vercel
+   - 同样添加 `api_root` 配置
+
+#### 方案 B：部署到 Netlify（最简单）
+
+如果你希望使用原生的 Netlify Identity 服务：
+
+1. 将网站部署到 Netlify（连接 GitHub 仓库即可）
+2. 在 Netlify Dashboard 中启用 **Identity** 服务
+3. 配置 GitHub 作为外部认证提供商
+4. 在 `config.yml` 中添加：
+   ```yaml
+   backend:
+     name: github
+     repo: 你的用户名/你的仓库名
+     branch: main
+     # 使用 Netlify Identity
+     identity_url: https://你的站点.netlify.app/.netlify/identity
+   ```
+
+#### 方案 C：本地开发模式
+
+对于内容创作，可以在本地使用 Decap CMS 的本地模式：
+
+1. 在 `config.yml` 中添加：`local_backend: true`
+2. 本地启动代理服务器：`npx decap-cms-proxy-server`
+3. 访问 `http://localhost:4321/admin` 即可直接使用
+
+本地模式下创建的内容会保存到本地 Git 仓库，提交后可以推送到 GitHub 触发自动部署。
+
+**建议**：对于个人博客，可以结合使用方案 C（本地创作）+ 方案 B（Netlify 部署），获得最佳体验。
 
 ## 第四步：本地测试
 
@@ -284,6 +332,15 @@ Decap CMS 支持自定义内容预览，让编辑者看到接近最终效果的�
 ### 5. 本地测试无法保存
 - **可能原因**：Git 仓库未初始化或权限问题
 - **解决**：确保本地仓库已初始化，且用户有写入权限
+
+### 6. 点击登录按钮显示404错误（线上环境）
+- **可能原因**：Decap CMS 默认使用 Netlify Identity 服务处理 GitHub OAuth 认证。当网站托管在 GitHub Pages 上时，Netlify 无法识别你的站点。
+- **现象**：登录时访问的 URL 类似：`https://api.netlify.com/auth?provider=github&site_id=你的域名&scope=public_repo`
+- **解决方案**：
+  1. **部署到 Netlify**：将网站部署到 Netlify 平台，使用其原生的 Identity 服务。
+  2. **使用外部 OAuth 服务器**：部署社区维护的 OAuth 服务器（如 Cloudflare Pages 或 Vercel 版本），并在 `config.yml` 中添加 `api_root` 配置。
+  3. **本地创作模式**：在本地使用 `local_backend: true` 配置，配合 `npx decap-cms-proxy-server` 进行内容创作，然后手动提交到 Git。
+  详细说明请参考上文"重要提醒：GitHub Pages 的特殊情况"章节。
 
 ## 安全注意事项
 
