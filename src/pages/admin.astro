@@ -3,25 +3,16 @@
 const title = "博客管理后台";
 const description = "使用 Decap CMS 管理博客内容";
 ---
-
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>{title}</title>
-    <meta name="description" content={description}/>
-    <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url">
-    <script src="https://unpkg.com/decap-cms@^3.1.0/dist/decap-cms.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
+    <title>内容管理器</title>
 </head>
 <body>
-<!-- 用于挂载 CMS 界面的容器 -->
-<div id="nc-root"></div>
-<!-- Decap CMS JavaScript -->
-<!-- 初始化脚本（可选） -->
-<script>
-    // 可以在这里进行一些自定义初始化
-    console.log('Decap CMS 已加载');
-</script>
+<script src="https://unpkg.com/decap-cms@^3.1.2/dist/decap-cms.js"></script>
 </body>
 </html>
