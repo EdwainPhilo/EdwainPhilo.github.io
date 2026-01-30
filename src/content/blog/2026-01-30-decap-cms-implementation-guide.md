@@ -218,7 +218,7 @@ Netlify）时，Netlify 的认证服务无法识别你的站点，因此返回 4
 2. 添加以下环境变量：
 
    | 变量名                    | 说明                             | 值                               |
-         |------------------------|--------------------------------|---------------------------------|
+            |------------------------|--------------------------------|---------------------------------|
    | `GITHUB_CLIENT_ID`     | GitHub OAuth 应用的 Client ID     | 你之前创建的 `Ov23ctr7M5ShaJ0geBCB`   |
    | `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用的 Client Secret | 需要你在 GitHub OAuth 应用设置中生成       |
    | `ALLOWED_ORIGINS`      | 允许的网站地址                        | `https://edwainphilo.github.io` |
@@ -308,7 +308,7 @@ backend:
 对于内容创作，可以在本地使用 Decap CMS 的本地模式：
 
 1. 在 `config.yml` 中添加：`local_backend: true`
-2. 本地启动代理服务器：`npx decap-cms-proxy-server`
+2. 本地启动代理服务器：`npx netlify-cms-proxy-server`
 3. 访问 `http://localhost:4321/admin` 即可直接使用
 
 本地模式下创建的内容会保存到本地 Git 仓库，提交后可以推送到 GitHub 触发自动部署。
@@ -463,7 +463,7 @@ Decap CMS 支持自定义内容预览，让编辑者看到接近最终效果的�
     1. **部署到 Netlify**：将网站部署到 Netlify 平台，使用其原生的 Identity 服务。
     2. **使用外部 OAuth 服务器**：部署社区维护的 OAuth 服务器（如 Cloudflare Pages 或 Vercel 版本），并在 `config.yml` 中添加
        `api_root` 配置。
-    3. **本地创作模式**：在本地使用 `local_backend: true` 配置，配合 `npx decap-cms-proxy-server` 进行内容创作，然后手动提交到
+    3. **本地创作模式**：在本地使用 `local_backend: true` 配置，配合 `npx netlify-cms-proxy-server` 进行内容创作，然后手动提交到
        Git。
        详细说明请参考上文"重要提醒：GitHub Pages 的特殊情况"章节。
 
