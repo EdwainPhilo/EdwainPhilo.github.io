@@ -2,8 +2,8 @@ backend:
   name: github
   repo: EdwainPhilo/EdwainPhilo.github.io
   branch: main
-  site_domain: philolife.top
-  base_url: https://philolife.top
+  site_domain: www.philolife.top
+  base_url: https://www.philolife.top
   auth_endpoint: oauth
 media_folder: "src/assets" # 文件将被存储在仓库中的位置
 public_folder: "../../assets" # 上传媒体文件的 src 属性
